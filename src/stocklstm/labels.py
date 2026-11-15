@@ -3,15 +3,19 @@ import pandas as pd
 from .features import safe_log
 
 
+def forward_log_return(close, horizon: int, lag: int):
+    """Log return from close[t+lag] to close[t+lag+horizon] (DataFrame or Series)."""
+    logc = safe_log(close)
+    return logc.shift(-(lag + horizon)) - logc.shift(-lag)
+
+
 def forward_excess_return(
     close: pd.DataFrame, bench: pd.Series, horizon: int, lag: int
 ) -> pd.DataFrame:
-    """Log return from close[t+lag] to close[t+lag+horizon], minus the benchmark's."""
-    logc = safe_log(close)
-    logb = safe_log(bench)
-    stock = logc.shift(-(lag + horizon)) - logc.shift(-lag)
-    market = logb.shift(-(lag + horizon)) - logb.shift(-lag)
-    return stock.sub(market, axis=0)
+    """Forward log return minus the benchmark's over the same window."""
+    return forward_log_return(close, horizon, lag).sub(
+        forward_log_return(bench, horizon, lag), axis=0
+    )
 
 
 def rank_label(excess: pd.DataFrame, member: pd.DataFrame) -> pd.DataFrame:

@@ -50,7 +50,9 @@ def run_baselines(cfg: dict, horizons: list[str] | None = None) -> pd.DataFrame:
             train = train.dropna(subset=[y])
             test = df[(df["date"] >= fold.test_start) & (df["date"] <= fold.test_end)]
             model = fit_lightgbm(train, features, y, lgb_cfg["params"], lgb_cfg["num_boost_round"])
-            p = test[["date", "ticker", y, fwd]].rename(columns={y: "y", fwd: "fwd"})
+            p = test[["date", "ticker", y, fwd, f"fwd_bench_{name}"]].rename(
+                columns={y: "y", fwd: "fwd", f"fwd_bench_{name}": "fwd_bench"}
+            )
             p = p.join(factor_predictions(test))
             p["lightgbm"] = predict_lightgbm(model, test, features)
             preds.append(p.assign(horizon=name, fold=i))
@@ -87,6 +89,7 @@ def run_baselines(cfg: dict, horizons: list[str] | None = None) -> pd.DataFrame:
                     h,
                     cfg["backtest"]["quantile"],
                     cfg["backtest"]["cost_bps"],
+                    bench="fwd_bench",
                 )
             )
             metrics.append(row)

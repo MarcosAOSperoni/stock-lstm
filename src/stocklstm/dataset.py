@@ -10,7 +10,7 @@ from .config import processed_dir, raw_dir
 from .data.macro import download_fred
 from .data.prices import download_prices
 from .features import cross_sectional_rank, market_features, stock_features
-from .labels import forward_excess_return, rank_label
+from .labels import forward_excess_return, forward_log_return, rank_label
 
 log = logging.getLogger(__name__)
 
@@ -121,6 +121,8 @@ def build_dataset(cfg: dict, max_tickers: int | None = None, seed: int = 0) -> p
         m["sector_etfs"],
         cfg["fred"]["lag_days"],
     )
+    for name, h in cfg["horizons"].items():
+        mkt[f"fwd_bench_{name}"] = forward_log_return(bench, h, cfg["execution_lag"])
 
     in_study = np.asarray(dates >= pd.Timestamp(cfg["start_date"]))[:, None]
     r, c = np.nonzero(member.to_numpy() & close.notna().to_numpy() & in_study)
