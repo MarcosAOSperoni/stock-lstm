@@ -30,13 +30,12 @@ def walk_forward_folds(
     dates = pd.DatetimeIndex(np.sort(dates.unique()))
     dates = dates[(dates >= start) & (dates < holdout_start)]
     folds: list[Fold] = []
+    last_test = len(dates) - 1 - purge
     test_start = start + pd.DateOffset(years=train_years)
     while test_start < holdout_start:
         test_end = min(test_start + pd.DateOffset(months=test_months), holdout_start)
         ts = int(dates.searchsorted(test_start))
-        te = int(dates.searchsorted(test_end)) - 1
-        if test_end >= holdout_start:
-            te -= purge
+        te = min(int(dates.searchsorted(test_end)) - 1, last_test)
         tr_end = ts - purge - 1
         if tr_end > 0 and te >= ts:
             folds.append(Fold(dates[0], dates[tr_end], dates[ts], dates[te]))

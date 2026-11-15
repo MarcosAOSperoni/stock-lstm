@@ -16,3 +16,13 @@ def test_folds_are_purged_and_stay_before_holdout():
         assert fold.train_start == dates[0]
         assert pos[fold.test_start] - pos[fold.train_end] == purge + 1
     assert pos[holdout] - pos[folds[-1].test_end] > purge
+
+
+def test_labels_never_reach_holdout_when_purge_exceeds_test_window():
+    dates = pd.bdate_range("2016-01-01", "2024-12-31")
+    holdout = pd.Timestamp("2023-06-01")
+    purge = 253
+    folds = walk_forward_folds(dates, "2016-01-01", holdout, 3, 6, purge)
+    pos = {d: i for i, d in enumerate(dates)}
+    assert folds
+    assert pos[holdout] - pos[folds[-1].test_end] > purge
