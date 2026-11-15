@@ -1,0 +1,65 @@
+# Paths are relative to the working directory; STOCKLSTM_DATA_DIR overrides data_dir
+# (e.g. point it at the TrueNAS NFS mount).
+data_dir: data
+reports_dir: reports
+
+# Study period. history_start leaves a year of warm-up for 252-day features.
+history_start: "2015-01-01"
+start_date: "2016-01-01"
+end_date: null            # null = today
+holdout_months: 18        # most recent data, untouched until final evaluation
+
+# Labels: enter at the close `execution_lag` trading days after the signal date,
+# hold for `h` trading days, measure log return in excess of the benchmark,
+# then rank cross-sectionally among index members on the signal date.
+execution_lag: 1
+horizons:
+  1d: 1
+  1w: 5
+  1m: 21
+  1y: 252
+
+universe:
+  membership_url: "https://raw.githubusercontent.com/fja05680/sp500/master/S%26P%20500%20Historical%20Components%20%26%20Changes%20(Updated).csv"
+  aliases_file: configs/ticker_aliases.yaml
+
+market:
+  benchmark: "^GSPC"
+  series:
+    vix: "^VIX"
+    oil: "CL=F"
+    dxy: "DX-Y.NYB"
+    gold: "GC=F"
+  sector_etfs: [XLB, XLE, XLF, XLI, XLK, XLP, XLU, XLV, XLY, XLC, XLRE]
+
+# FRED series ids; shifted by fred_lag_days trading days to respect publication timing.
+fred:
+  lag_days: 1
+  series:
+    dgs10: DGS10
+    dgs2: DGS2
+    t10y2y: T10Y2Y
+    hy_spread: BAMLH0A0HYM2
+    fed_funds: DFF
+
+walk_forward:
+  train_years: 3
+  test_months: 6
+
+lightgbm:
+  num_boost_round: 300
+  params:
+    objective: regression
+    learning_rate: 0.03
+    num_leaves: 31
+    min_data_in_leaf: 2000
+    feature_fraction: 0.8
+    bagging_fraction: 0.7
+    bagging_freq: 1
+    lambda_l2: 10.0
+    verbosity: -1
+    seed: 7
+
+backtest:
+  quantile: 0.1           # long top decile, short bottom decile
+  cost_bps: 10            # per unit of one-way turnover

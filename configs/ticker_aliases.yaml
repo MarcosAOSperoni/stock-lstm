@@ -1,0 +1,28 @@
+# Historical index symbol -> current Yahoo symbol that carries the same company's
+# price history (pure ticker changes only; mergers that changed the price series are
+# deliberately excluded). Verified to have history back to 2015 unless noted.
+ADS: BFH
+ABC: COR
+ANTM: ELV
+ARNC: HWM      # Arconic Inc. renamed Howmet in 2020; Yahoo history starts 2016-11
+BHGE: BKR
+BLL: BALL
+DWDP: DD
+FBHS: FBIN
+FI: FISV
+FLT: CPAY
+GPS: GAP
+HCP: DOC
+HFC: DINO
+HRS: LHX
+JEC: J
+KORS: CPRI
+MYL: VTRS
+NLOK: GEN
+PEAK: DOC
+PKI: RVTY
+RE: EG
+SYMC: GEN
+TMK: GL
+UTX: RTX
+WLTW: WTW
