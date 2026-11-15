@@ -8,12 +8,12 @@ from stocklstm.labels import forward_excess_return, rank_label
 def test_features_do_not_look_ahead(wide_prices):
     close, volume, bench, _ = wide_prices
     cut = 300
-    base = stock_features(close, volume, bench)
+    base = stock_features(close, volume, bench, close)
     shocked_close = close.copy()
     shocked_close.iloc[cut + 1 :] *= 3.0
     shocked_bench = bench.copy()
     shocked_bench.iloc[cut + 1 :] *= 0.5
-    shocked = stock_features(shocked_close, volume, shocked_bench)
+    shocked = stock_features(shocked_close, volume, shocked_bench, shocked_close)
     for name in base:
         pd.testing.assert_frame_equal(
             base[name].iloc[: cut + 1], shocked[name].iloc[: cut + 1], check_exact=False

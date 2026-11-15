@@ -95,16 +95,17 @@ def build_dataset(cfg: dict, max_tickers: int | None = None, seed: int = 0) -> p
 
     close = prices.pivot(index="date", columns="ticker", values="close").reindex(dates)
     volume = prices.pivot(index="date", columns="ticker", values="volume").reindex(dates)
+    raw_close = prices.pivot(index="date", columns="ticker", values="raw_close").reindex(dates)
     if max_tickers and max_tickers < close.shape[1]:
         rng = np.random.default_rng(seed)
         keep = sorted(rng.choice(close.columns, size=max_tickers, replace=False))
-        close, volume = close[keep], volume[keep]
+        close, volume, raw_close = close[keep], volume[keep], raw_close[keep]
     member = universe.membership_matrix(snaps, dates).reindex(
         columns=close.columns, fill_value=False
     )
 
     cols: dict[str, pd.DataFrame] = {}
-    for name, frame in stock_features(close, volume, bench).items():
+    for name, frame in stock_features(close, volume, bench, raw_close).items():
         cols[f"cs_{name}"] = cross_sectional_rank(frame, member)
     for name, h in cfg["horizons"].items():
         excess = forward_excess_return(close, bench, h, cfg["execution_lag"])

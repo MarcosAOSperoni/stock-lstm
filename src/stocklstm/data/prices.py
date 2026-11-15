@@ -6,7 +6,7 @@ import yfinance as yf
 
 log = logging.getLogger(__name__)
 
-FIELDS = ["open", "high", "low", "close", "volume"]
+FIELDS = ["open", "high", "low", "close", "volume", "raw_close"]
 
 
 def _download(symbols: list[str], start: str, end: str) -> pd.DataFrame:
@@ -15,7 +15,7 @@ def _download(symbols: list[str], start: str, end: str) -> pd.DataFrame:
             symbols,
             start=start,
             end=end,
-            auto_adjust=True,
+            auto_adjust=False,
             group_by="ticker",
             threads=True,
             progress=False,
@@ -30,14 +30,20 @@ def _download(symbols: list[str], start: str, end: str) -> pd.DataFrame:
     long = raw.stack(level=0, future_stack=True).reset_index()
     long.columns = [str(c).lower() for c in long.columns]
     long = long.rename(columns={"level_1": "symbol", "ticker": "symbol"})
-    long = long.dropna(subset=["close"])
+    long = long.dropna(subset=["close", "adj close"])
+    # "close" is split-adjusted only; keep it as raw_close for dollar volume, since the
+    # dividend adjustment in "adj close" depends on dividends paid after the date.
+    ratio = long["adj close"] / long["close"]
+    long["raw_close"] = long["close"]
+    long[["open", "high", "low"]] = long[["open", "high", "low"]].mul(ratio, axis=0)
+    long["close"] = long["adj close"]
     return long[["date", "symbol", *FIELDS]]
 
 
 def download_prices(
     symbols: list[str], start: str, end: str, chunk: int = 100, retries: int = 2
 ) -> pd.DataFrame:
-    """Daily split/dividend-adjusted OHLCV in long format: date, symbol, open..volume.
+    """Daily split/dividend-adjusted OHLCV (+ split-only raw_close) in long format.
 
     Symbols missing from a chunk are retried individually, since Yahoo intermittently
     drops symbols from large batch requests.

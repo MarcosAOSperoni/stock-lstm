@@ -19,9 +19,13 @@ def safe_log(x):
 
 
 def stock_features(
-    close: pd.DataFrame, volume: pd.DataFrame, bench: pd.Series
+    close: pd.DataFrame, volume: pd.DataFrame, bench: pd.Series, raw_close: pd.DataFrame
 ) -> dict[str, pd.DataFrame]:
-    """Raw per-stock price/volume features, each a wide frame aligned to `close`."""
+    """Raw per-stock price/volume features, each a wide frame aligned to `close`.
+
+    `close` is total-return adjusted; `raw_close` is split-adjusted only and is used for
+    dollar volume so the feature doesn't depend on later dividends.
+    """
     logc = safe_log(close)
     lr = logc.diff()
     mlr = safe_log(bench).diff()
@@ -40,7 +44,7 @@ def stock_features(
     f["volume_z_63"] = (logv - logv.rolling(63, min_periods=50).mean()) / logv.rolling(
         63, min_periods=50
     ).std()
-    f["log_dollar_vol_21"] = safe_log((close * volume).rolling(21, min_periods=15).mean())
+    f["log_dollar_vol_21"] = safe_log((raw_close * volume).rolling(21, min_periods=15).mean())
     cov = lr.mul(mlr, axis=0).rolling(63, min_periods=50).mean() - lr.rolling(
         63, min_periods=50
     ).mean().mul(mlr.rolling(63, min_periods=50).mean(), axis=0)
